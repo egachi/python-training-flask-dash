@@ -23,7 +23,7 @@
 #OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
 #THE SOFTWARE.
 
-import flask
+from flask import Flask
 import dash
 import dash_core_components as dcc
 import dash_html_components as html
@@ -32,7 +32,7 @@ import os
 
 external_stylesheets = ['https://codepen.io/chriddyp/pen/bWLwgP.css']
 
-app = flask.Flask(__name__) #Reference https://dash.plotly.com/deployment
+app = Flask(__name__) #Reference https://dash.plotly.com/deployment
 dash = dash.Dash(__name__, external_stylesheets=external_stylesheets, server=app)
 
 df = pd.read_csv('https://gist.githubusercontent.com/chriddyp/5d1ea79569ed194d432e56108a04d188/raw/a9f9e8076b837d541398e999dcbac2b2826a81f8/gdp-life-exp-2007.csv')
