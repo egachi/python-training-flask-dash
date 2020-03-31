@@ -67,5 +67,5 @@ app.layout = html.Div([
 
 if __name__ == '__main__':
     port= os.environ.get('PORT')
-    server = app.run_server(host='0.0.0.0', debug=False, port=port)
+    app = app.run_server(host='0.0.0.0', debug=False, port=port)
     
