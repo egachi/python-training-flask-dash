@@ -8,7 +8,7 @@ on:
 env:
   WEBAPP: edisga-python-linux
   GROUP: Linux-ResourceGroup
-  ACCOUNT: edisga  
+  ACCOUNT: edisga2  
   CONTAINER: pythonapp
   EXPIRY_TIME: 10 minutes
 
@@ -71,6 +71,7 @@ jobs:
           azcliversion: 2.19.1
           inlineScript: |
             az extension add --name webapp
+            az storage account create -n $ACCOUNT -g $GROUP -l southcentralus
             az storage container create -n $CONTAINER --account-name $ACCOUNT
             az storage blob upload -f app.zip --account-name $ACCOUNT -c $CONTAINER -n $ACCOUNT
             ZIP_URL=$(az storage blob generate-sas --full-uri --permissions r --expiry ${{ env.expiry }} --account-name $ACCOUNT -c $CONTAINER -n $ACCOUNT | xargs)
