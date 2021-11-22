@@ -1,0 +1,77 @@
+name: Deploy web app via Storage Account
+
+on:
+  push:
+    branches: master
+  workflow_dispatch:
+
+env:
+  WEBAPP: edisga-python-linux
+  GROUP: Linux-ResourceGroup
+  ACCOUNT: edisga  
+  CONTAINER: pythonapp
+  EXPIRY_TIME: 10 minutes
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+
+    steps:
+      - uses: actions/checkout@v2
+
+      - name: Set up Python version
+        uses: actions/setup-python@v1
+        with:
+          python-version: '3.8'
+
+      - name: Create and start virtual environment
+        run: |
+          python -m venv antenv
+          source antenv/bin/activate
+      
+      - name: Install dependencies
+        run: pip install -r requirements.txt
+
+      
+      - name: Upload artifact for deployment jobs
+        uses: actions/upload-artifact@v2
+        with:
+          name: python-app
+          path: |
+            . 
+  
+  publish:
+    runs-on: ubuntu-latest
+    needs: build
+    
+    steps:
+      - name: Azure Login
+        uses: azure/login@v1
+        with:
+          creds: ${{ secrets.AZURE_CREDENTIALS }}
+          
+      - name: Download artifact
+        uses: actions/download-artifact@v2
+        with:
+          name: app
+      
+      - name: Zip the app contents
+        uses: papeloto/action-zip@v1
+        with:
+          files: .
+          dest: app.zip
+
+      - name: Set SAS token expiration
+        run: echo "expiry=`date -u -d "$EXPIRY_TIME" '+%Y-%m-%dT%H:%MZ'`" >> $GITHUB_ENV
+
+      - name: Azure CLI script
+        uses: azure/CLI@v1
+        with:
+          azcliversion: 2.19.1
+          inlineScript: |
+            az extension add --name webapp
+            az storage container create -n $CONTAINER --account-name $ACCOUNT
+            az storage blob upload -f app.zip --account-name $ACCOUNT -c $CONTAINER -n $ACCOUNT
+            ZIP_URL=$(az storage blob generate-sas --full-uri --permissions r --expiry ${{ env.expiry }} --account-name $ACCOUNT -c $CONTAINER -n $ACCOUNT | xargs)
+            az webapp deploy --name $WEBAPP --resource-group $GROUP --type zip --src-url  $ZIP_URL --async false
+            az storage container delete -n $CONTAINER --account-name $ACCOUNT 
